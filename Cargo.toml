@@ -1,0 +1,21 @@
+[package]
+name = "devel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-process = "2.2.3"
+async-std = "1.12.0"
+iced = "0.12.1"
+open = "5.1.4"
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.117"
+tokio = { version = "1.38.0", features = ["full"] }
+
+# [dependencies.uuid]
+# version = "1.8.0"
+# features = [
+#     "v4",                # Lets you generate random UUIDs
+#     "fast-rng",          # Use a faster (but still sufficiently random) RNG
+#     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+# ]
