@@ -1,0 +1,319 @@
+[
+  {
+    "name": "Neovim",
+    "executableName": "nvim",
+    "packageName": "neovim",
+    "descFile": "nvim_desc.txt",
+    "website": "https://neovim.io",
+    "installCmd": "",
+    "uninstallCmd": "",
+    "catagories": [
+      "editor"
+    ],
+    "learnForm": [
+      {
+        "id": 1,
+        "website": "https://www.youtube.com/results?search_query=learn+neovim"
+      }
+    ]
+  },
+  {
+    "name": "Vim",
+    "executableName": "vim",
+    "packageName": "vim",
+    "descFile": "vim_desc.txt",
+    "website": "https://www.vim.org",
+    "installCmd": "",
+    "uninstallCmd": "",
+    "catagories": [
+      "editor"
+    ],
+    "learnForm": [
+      {
+        "id": 1,
+        "website": "https://www.youtube.com/results?search_query=learn+vim"
+      }
+    ]
+  },
+  {
+    "name": "Visual Studio Code",
+    "executableName": "code",
+    "packageName": "code",
+    "descFile": "code_desc.txt",
+    "website": "https://code.visualstudio.com",
+    "installCmd": "",
+    "uninstallCmd": "",
+    "catagories": [
+      "editor",
+      "ide"
+    ],
+    "learnForm": [
+      {
+        "id": 1,
+        "website": "https://www.youtube.com/results?search_query=learn+vscode"
+      }
+    ]
+  },
+  {
+    "name": "Python3",
+    "executableName": "python3",
+    "packageName": "python",
+    "descFile": "python_desc.txt",
+    "website": "https://www.python.org",
+    "installCmd": "",
+    "uninstallCmd": "",
+    "catagories": [
+      "lang"
+    ],
+    "learnForm": [
+      {
+        "id": 1,
+        "website": "https://www.youtube.com/results?search_query=learn+python"
+      },
+      {
+        "id": 2,
+        "website": "https://www.learnpython.org/"
+      }
+    ]
+  },
+  {
+    "name": "GCC",
+    "executableName": "gcc",
+    "packageName": "gcc",
+    "descFile": "gcc_desc.txt",
+    "website": "https://gcc.gnu.org",
+    "installCmd": "",
+    "uninstallCmd": "",
+    "catagories": [
+      "lang"
+    ],
+    "learnForm": [
+      {
+        "id": 1,
+        "website": "https://www.youtube.com/results?search_query=learn+c"
+      },
+      {
+        "id": 2,
+        "website": "https://www.youtube.com/results?search_query=learn+c++"
+      },
+      {
+        "id": 3,
+        "website": "https://www.learn-c.org/"
+      },
+      {
+        "id": 4,
+        "website": "https://www.learncpp.com/"
+      },
+      {
+        "id": 5,
+        "website": "https://www.learn-cpp.org/"
+      }
+    ]
+  },
+  {
+    "name": "Clang",
+    "executableName": "clang",
+    "packageName": "clang",
+    "descFile": "clang_desc.txt",
+    "website": "https://clang.llvm.org",
+    "installCmd": "",
+    "uninstallCmd": "",
+    "catagories": [
+      "lang"
+    ],
+    "learnForm": [
+      {
+        "id": 1,
+        "website": "https://www.youtube.com/results?search_query=learn+c"
+      },
+      {
+        "id": 2,
+        "website": "https://www.youtube.com/results?search_query=learn+c++"
+      },
+      {
+        "id": 3,
+        "website": "https://www.learn-c.org/"
+      },
+      {
+        "id": 4,
+        "website": "https://www.learncpp.com/"
+      },
+      {
+        "id": 5,
+        "website": "https://www.learn-cpp.org/"
+      }
+    ]
+  },
+  {
+    "name": "Rust",
+    "executableName": "rustc",
+    "packageName": "",
+    "descFile": "rust_desc.txt",
+    "website": "https://www.rust-lang.org",
+    "installCmd": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs && /bin/bash",
+    "uninstallCmd": "rustup self uninstall",
+    "catagories": [
+      "lang"
+    ],
+    "learnForm": [
+      {
+        "id": 1,
+        "website": "https://www.youtube.com/results?search_query=learn+rust"
+      },
+      {
+        "id": 2,
+        "website": "https://doc.rust-lang.org/book/"
+      },
+      {
+        "id": 3,
+        "website": "https://doc.rust-lang.org/rust-by-example/"
+      },
+      {
+        "id": 4,
+        "website": "https://github.com/rust-lang/rustlings/"
+      }
+    ]
+  },
+  {
+    "name": "Lua",
+    "executableName": "lua",
+    "packageName": "lua",
+    "descFile": "lua_desc.txt",
+    "website": "https://www.lua.org/about.html",
+    "installCmd": "",
+    "uninstallCmd": "",
+    "catagories": [
+      "lang"
+    ],
+    "learnForm": [
+      {
+        "id": 1,
+        "website": "https://www.lua.org/pil/contents.html"
+      },
+      {
+        "id": 2,
+        "website": "https://www.tutorialspoint.com/lua/index.htm"
+      },
+      {
+        "id": 3,
+        "website": "https://www.youtube.com/results?search_query=learn+lua"
+      }
+    ]
+  },
+  {
+    "name": "C#",
+    "executableName": "dotnet",
+    "packageName": "",
+    "descFile": "csharp_desc.txt",
+    "website": "https://www.lua.org/about.html",
+    "installCmd": "yay -S dotnet-sdk dotnet-runtime",
+    "uninstallCmd": "yay -R dotnet-sdk dotnet-runtime",
+    "catagories": [
+      "lang"
+    ],
+    "learnForm": [
+      {
+        "id": 1,
+        "website": "https://dotnet.microsoft.com/en-us/learn/csharp"
+      },
+      {
+        "id": 2,
+        "website": "https://www.w3schools.com/cs/index.php"
+      },
+      {
+        "id": 3,
+        "website": "https://www.youtube.com/results?search_query=learn+c#"
+      },
+      {
+        "id": 4,
+        "website": "https://dotnettutorials.net/course/csharp-dot-net-tutorials/"
+      },
+      {
+        "id": 5,
+        "website": "https://www.codecademy.com/learn/learn-c-sharp"
+      }
+    ]
+  },
+  {
+    "name": "Swift",
+    "executableName": "swift-bin",
+    "packageName": "",
+    "descFile": "swift_desc.txt",
+    "website": "https://www.swift.org",
+    "installCmd": "yay -S swift-bin",
+    "uninstallCmd": "yay -R swift-bin",
+    "catagories": [
+      "lang"
+    ],
+    "learnForm": [
+      {
+        "id": 1,
+        "website": "https://www.swift.org/getting-started/"
+      },
+      {
+        "id": 2,
+        "website": "https://dotnet.microsoft.com/en-us/learn/csharp"
+      },
+      {
+        "id": 3,
+        "website": "https://www.coursera.org/learn/programming-fundamentals-swift"
+      },
+      {
+        "id": 4,
+        "website": "https://www.youtube.com/results?search_query=learn+swift"
+      }
+    ]
+  },
+  {
+    "name": "PyCharm",
+    "executableName": "pycharm-community-edition",
+    "packageName": "pycharm-community-edition",
+    "descFile": "pycharm_desc.txt",
+    "website": "https://www.jetbrains.com/pycharm",
+    "installCmd": "",
+    "uninstallCmd": "",
+    "catagories": [
+      "Editor"
+    ],
+    "learnForm": []
+  },
+  {
+    "name": "Intellij Idea",
+    "executableName": "intellij-idea-community-edition",
+    "packageName": "intellij-idea-community-edition",
+    "descFile": "idea_desc.txt",
+    "website": "https://www.jetbrains.com/idea",
+    "installCmd": "",
+    "uninstallCmd": "",
+    "catagories": [
+      "Editor"
+    ],
+    "learnForm": []
+  },
+  {
+    "name": "RustRover",
+    "executableName": "rustrover",
+    "packageName": "",
+    "descFile": "rover_desc.txt",
+    "website": "https://www.jetbrains.com/rust",
+    "installCmd": "yay -S rustrover",
+    "uninstallCmd": "yay -R rustrover",
+    "catagories": [
+      "Editor"
+    ],
+    "learnForm": []
+  },
+  {
+    "name": "WebStorm",
+    "executableName": "webstorm",
+    "packageName": "",
+    "descFile": "storm_desc.txt",
+    "website": "https://www.jetbrains.com/webstorm",
+    "installCmd": "yay -S webstorm",
+    "uninstallCmd": "yay -R webstorm",
+    "catagories": [
+      "Editor"
+    ],
+    "learnForm": []
+  }
+]

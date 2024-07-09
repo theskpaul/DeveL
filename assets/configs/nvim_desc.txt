@@ -1,0 +1,20 @@
+[] Features
+
+>> Extensible
+     API is first-class: discoverable, versioned, documented.
+     MessagePack structured communication enables extensions in any language.
+     Remote plugins run as co-processes, safely and asynchronously.
+     GUIs, IDEs, web browsers can --embed Neovim as an editor or script host.
+     Lua plugins are easy to create just like Vimscript plugins. Your config can live in init.lua!
+     AST-producing parsing engine enables faster, more accurate syntax highlighting, code navigation, refactoring, text objects, and motions.
+
+>> Usable
+     Builtin LSP client for semantic code inspection and refactoring (go-to definition, "find references", format, …)
+     Strong defaults
+     Works the same everywhere: one build-type, one command
+     Modern terminal features such as cursor styling, focus events, bracketed paste
+     Builtin terminal emulator
+
+>> Drop-in Vim
+     Fully compatible with Vim's editing model and Vimscript v1.
+     Start with :help nvim-from-vim if you already use Vim.

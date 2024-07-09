@@ -1,17 +1,24 @@
+mod decorations;
+mod entries;
+
 use iced::alignment::{self, Alignment};
 use iced::font::{Family, Style, Weight};
 use iced::theme::{self, Container as ContainerTheme};
-use iced::widget::{button, column, container, keyed_column, row, text, Container, Text};
-use iced::{
-    window, Application, Background::Color as BackgroundColor, Color, Command, Font, Pixels,
-    Result as IcedResult, Settings, Shadow, Size,
+use iced::widget::{
+    button, column, container, horizontal_space, keyed_column, row, text, Container,
 };
+use iced::{window, Application, Command, Font, Pixels, Result as IcedResult, Settings, Size};
 use iced::{Element, Length};
 
-use serde::{Deserialize, Serialize};
-use std::fs;
+use decorations::*;
+use entries::{EMessages, Entries, ExpandedEMessages};
 
-const ENTRIES_LIST: &str = "/home/varuos/.config/dev_helper/entries.json";
+// TODO: Taskes need to do.
+// 1. Make it modular
+// 2. Reduce startup time
+// 3. Improve UI, Make it more responsive
+// 4. Improve UX also
+// 5. Display package catagories and show them horizontally
 
 fn main() -> IcedResult {
     let app_window_settings = Settings {
@@ -30,8 +37,11 @@ fn main() -> IcedResult {
             ..Default::default()
         },
         antialiasing: true,
-        default_text_size: Pixels::from(18.0),
-        fonts: vec![include_bytes!("../fonts/regular.ttf").as_slice().into()],
+        default_text_size: Pixels::from(16.5),
+        fonts: vec![
+            include_bytes!("../fonts/regular.ttf").as_slice().into(),
+            include_bytes!("../fonts/bold.otf").as_slice().into(),
+        ],
         ..Default::default()
     };
 
@@ -41,14 +51,17 @@ fn main() -> IcedResult {
 #[derive(Debug, Clone)]
 enum Message {
     FilterChanged(Filter),
-    ExpandedEntryMessage(usize, ExpandedEntryMessages),
-    EntryMessage(usize, EntryMessages),
+    ExpandedEntryMessage(usize, ExpandedEMessages),
+    EntryMessage(usize, EMessages),
+    PrevPage,
+    NextPage,
 }
 
 struct AppObj {
     filter: Filter,
     seleced_entity: Vec<Entries>,
-    entries: Vec<Entries>,
+    entries: Vec<Vec<Entries>>,
+    current_index: usize,
 }
 
 impl Application for AppObj {
@@ -67,6 +80,7 @@ impl Application for AppObj {
                 filter: Filter::All,
                 seleced_entity: vec![],
                 entries: Entries::load(),
+                current_index: 0,
             },
             Command::none(),
         )
@@ -75,33 +89,75 @@ impl Application for AppObj {
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         #[tokio::main]
         async fn install(package_name: &str) {
-            perform(package_name, TaskType::Install).await;
+            perform(TaskType::Install(package_name.to_string())).await;
+        }
+
+        #[tokio::main]
+        async fn alt_install(install_cmd: &str) {
+            perform(TaskType::AltInstall(install_cmd.to_string())).await;
         }
 
         #[tokio::main]
         async fn uninstall(package_name: &str) {
-            perform(package_name, TaskType::Uninstall).await;
+            perform(TaskType::Uninstall(package_name.to_string())).await;
+        }
+
+        #[tokio::main]
+        async fn alt_uninstall(uninstall_cmd: &str) {
+            perform(TaskType::AltUninstall(uninstall_cmd.to_string())).await;
         }
 
         match message {
             Message::FilterChanged(filter) => self.filter = filter,
-            Message::EntryMessage(i, EntryMessages::Select) => {
-                self.seleced_entity = vec![self.entries[i].clone()];
+
+            Message::PrevPage => {
+                if self.current_index != 0 {
+                    self.current_index -= 1;
+                }
+            }
+
+            Message::NextPage => {
+                let len = self.entries.len();
+                if self.current_index != len - 1 {
+                    self.current_index += 1;
+                }
+            }
+
+            Message::EntryMessage(i, EMessages::Select) => {
+                self.seleced_entity = vec![self.entries[self.current_index][i].clone()];
             }
             Message::EntryMessage(i, entry_message) => {
-                if let Some(entity) = self.entries.get_mut(i) {
+                if let Some(entity) = self.entries[self.current_index].get_mut(i) {
                     entity.update(entry_message);
                 }
             }
-            Message::ExpandedEntryMessage(i, ExpandedEntryMessages::Install) => {
-                install(&self.seleced_entity[i].package_name);
+
+            Message::ExpandedEntryMessage(i, ExpandedEMessages::Install) => {
+                let pname = &self.seleced_entity[i].package_name;
+                let icmd = &self.seleced_entity[i].install_cmd;
+
+                if !pname.is_empty() {
+                    install(pname);
+                } else {
+                    alt_install(icmd);
+                }
             }
-            Message::ExpandedEntryMessage(i, ExpandedEntryMessages::UnInstall) => {
-                uninstall(&self.seleced_entity[i].package_name);
+
+            Message::ExpandedEntryMessage(i, ExpandedEMessages::UnInstall) => {
+                let pname = &self.seleced_entity[i].package_name;
+                let ucmd = &self.seleced_entity[i].uninstall_cmd;
+
+                if !pname.is_empty() {
+                    uninstall(pname);
+                } else {
+                    alt_uninstall(ucmd);
+                }
             }
-            Message::ExpandedEntryMessage(_, ExpandedEntryMessages::Close) => {
+
+            Message::ExpandedEntryMessage(_, ExpandedEMessages::Close) => {
                 self.seleced_entity = vec![];
             }
+
             Message::ExpandedEntryMessage(i, entry_message) => {
                 if let Some(entity) = self.seleced_entity.get_mut(i) {
                     entity.expanded_update(entry_message);
@@ -114,33 +170,33 @@ impl Application for AppObj {
     fn view(&self) -> iced::Element<Self::Message> {
         let title = text("DeveL")
             .size(80)
-            .height(200)
+            .height(Length::Fill)
             .width(Length::Fill)
             .vertical_alignment(alignment::Vertical::Center)
             .horizontal_alignment(alignment::Horizontal::Center);
 
-        let controls = view_controls(&self.entries, self.filter);
-        let filtered_entries = self
-            .entries
+        let controls = view_controls(self.filter);
+        let filtered_entries = self.entries[self.current_index]
             .iter()
             .filter(|entries| self.filter.matches(entries));
 
         let entries: Element<_> = if filtered_entries.count() > 0 {
             keyed_column(
-                self.entries
+                self.entries[self.current_index]
                     .iter()
                     .enumerate()
-                    .filter(|(_, entity)| self.filter.matches(entity))
-                    .map(|(i, entity)| {
+                    .filter(|(_, entries)| self.filter.matches(entries))
+                    .map(|(i, entries)| {
                         (
-                            entity.id,
-                            entity
+                            entries.id,
+                            entries
                                 .view()
                                 .map(move |message| Message::EntryMessage(i, message)),
                         )
                     }),
             )
-            .spacing(10)
+            .spacing(11)
+            .height(294)
             .into()
         } else {
             empty_message(match self.filter {
@@ -150,7 +206,31 @@ impl Application for AppObj {
             })
         };
 
-        let lpanel = Container::new(column![title, controls, entries].spacing(20))
+        let prev_entries = button("PREV")
+            .height(35)
+            .style(if self.current_index == 0 {
+                theme::Button::Custom(Box::new(DisabledBtnStyle))
+            } else {
+                theme::Button::Custom(Box::new(BtnStyle))
+            })
+            .on_press(Message::PrevPage);
+
+        let next_entries = button("NEXT")
+            .height(35)
+            .style(if self.current_index == self.entries.len() - 1 {
+                theme::Button::Custom(Box::new(DisabledBtnStyle))
+            } else {
+                theme::Button::Custom(Box::new(BtnStyle))
+            })
+            .on_press(Message::NextPage);
+
+        let entries_group = column![
+            entries,
+            row![prev_entries, horizontal_space(), next_entries].align_items(Alignment::Center)
+        ]
+        .spacing(20);
+
+        let lpanel = Container::new(column![title, controls, entries_group].spacing(20))
             .width(500.0)
             .height(Length::Fill)
             .padding(18.0)
@@ -180,6 +260,10 @@ impl Application for AppObj {
     }
 }
 
+fn empty_learn_btns<'a>() -> iced::Element<'a, ExpandedEMessages> {
+    container("").into()
+}
+
 fn empty_message(message: &str) -> iced::Element<'_, Message> {
     container(
         text(message)
@@ -189,7 +273,7 @@ fn empty_message(message: &str) -> iced::Element<'_, Message> {
     )
     .center_x()
     .center_y()
-    .height(200)
+    .height(294)
     .into()
 }
 
@@ -202,9 +286,7 @@ fn empty_expanded_msg(message: &str) -> iced::Element<'_, Message> {
         .into()
 }
 
-fn view_controls(entities: &[Entries], current_filter: Filter) -> iced::Element<Message> {
-    let packages_installed = entities.iter().filter(|entity| entity.installed).count();
-
+fn view_controls<'a>(current_filter: Filter) -> iced::Element<'a, Message> {
     let filter_button = |label, filter, current_filter| {
         let label = text(label);
 
@@ -217,40 +299,33 @@ fn view_controls(entities: &[Entries], current_filter: Filter) -> iced::Element<
         button.on_press(Message::FilterChanged(filter)).padding(8.0)
     };
 
-    let install_status = format!(
-        "{packages_installed} {} Installed",
-        if packages_installed == 1 {
-            "Package"
-        } else {
-            "Packages"
-        }
-    );
-
     row![
-        text(install_status).width(Length::Fill),
+        horizontal_space(),
         row![
             filter_button("All", Filter::All, current_filter),
             filter_button("Not Installed", Filter::Notinstalled, current_filter),
             filter_button("Installed", Filter::Installed, current_filter),
         ]
         .width(Length::Shrink)
-        .spacing(10)
+        .spacing(8)
     ]
-    .spacing(20)
+    .spacing(13)
     .align_items(Alignment::Center)
     .into()
 }
 
 enum TaskType {
-    Install,
-    Uninstall,
+    Install(String),
+    Uninstall(String),
+    AltInstall(String),
+    AltUninstall(String),
 }
 
-async fn perform(package_name: &str, task: TaskType) {
+async fn perform(task: TaskType) {
     use async_process::{Command, Stdio};
 
     match task {
-        TaskType::Install => {
+        TaskType::Install(package_name) => {
             let _ = Command::new("alacritty")
                 .arg("-e")
                 .arg("pkexec")
@@ -260,13 +335,29 @@ async fn perform(package_name: &str, task: TaskType) {
                 .stdout(Stdio::piped())
                 .spawn();
         }
-        TaskType::Uninstall => {
+        TaskType::Uninstall(package_name) => {
             let _ = Command::new("alacritty")
                 .arg("-e")
                 .arg("pkexec")
                 .arg("pacman")
-                .arg("-S")
+                .arg("-R")
                 .arg(package_name)
+                .stdout(Stdio::piped())
+                .spawn();
+        }
+        TaskType::AltInstall(cmd) => {
+            let args: Vec<&str> = cmd.split_whitespace().collect();
+            let _ = Command::new("alacritty")
+                .arg("-e")
+                .args(args)
+                .stdout(Stdio::piped())
+                .spawn();
+        }
+        TaskType::AltUninstall(cmd) => {
+            let args: Vec<&str> = cmd.split_whitespace().collect();
+            let _ = Command::new("alacritty")
+                .arg("-e")
+                .args(args)
                 .stdout(Stdio::piped())
                 .spawn();
         }
@@ -287,400 +378,6 @@ impl Filter {
             Filter::All => true,
             Filter::Installed => entity.installed,
             Filter::Notinstalled => !entity.installed,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-enum EntryMessages {
-    Select,
-    VisitWebsite,
-}
-
-#[derive(Clone, Debug)]
-enum ExpandedEntryMessages {
-    Install,
-    UnInstall,
-    VisitWebsite,
-    Close,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Entries {
-    id: usize,
-    name: String,
-    execute_cmd: String,
-    package_name: String,
-    desc: String,
-    website: String,
-    catagories: Vec<String>,
-
-    #[serde(skip)]
-    installed: bool,
-}
-impl Default for Entries {
-    fn default() -> Self {
-        Self {
-            id: 0,
-            name: "".to_string(),
-            execute_cmd: "".to_string(),
-            package_name: "".to_string(),
-            desc: "".to_string(),
-            website: "".to_string(),
-            catagories: vec![],
-            installed: false,
-        }
-    }
-}
-
-impl Entries {
-    fn load() -> Vec<Entries> {
-        let json = fs::read_to_string(ENTRIES_LIST).expect("Failed to read file!");
-
-        let mut entry: Vec<Entries> =
-            serde_json::from_str(&json).expect("Something is worng with json!");
-
-        let status = |name| {
-            use std::process::Command;
-            let output = Command::new("pacman")
-                .arg("-Q")
-                .arg(name)
-                .output()
-                .expect("command not found!");
-
-            output.status.success()
-        };
-
-        let mut result: Vec<Entries> = Vec::new();
-        for entry in entry.iter_mut() {
-            entry.installed = status(&entry.package_name);
-            result.push(entry.clone());
-        }
-
-        return result;
-    }
-
-    fn update(&mut self, message: EntryMessages) {
-        match message {
-            EntryMessages::VisitWebsite => {
-                let path = &self.website;
-                match open::that(path) {
-                    Ok(()) => println!("Opened '{}' successfully.", path),
-                    Err(err) => panic!("An error occurred when opening '{}': {}", path, err),
-                }
-            }
-            EntryMessages::Select => {}
-        }
-    }
-
-    fn expanded_update(&mut self, message: ExpandedEntryMessages) {
-        match message {
-            ExpandedEntryMessages::Install => {}
-            ExpandedEntryMessages::UnInstall => {}
-            ExpandedEntryMessages::VisitWebsite => {
-                let path = &self.website;
-                match open::that(path) {
-                    Ok(()) => println!("Opened '{}' successfully.", path),
-                    Err(err) => panic!("An error occurred when opening '{}': {}", path, err),
-                }
-            }
-            ExpandedEntryMessages::Close => {}
-        }
-    }
-
-    fn view(&self) -> iced::Element<EntryMessages> {
-        let m_button = button(text(&self.name))
-            .on_press(EntryMessages::Select)
-            .style(iced::theme::Button::Text)
-            .width(Length::Fill);
-
-        container(row![
-            m_button,
-            button(info_icon())
-                .on_press(EntryMessages::VisitWebsite)
-                .style(theme::Button::Custom(Box::new(BtnStyle)))
-        ])
-        .padding(8)
-        .style(ContainerTheme::Custom(Box::new(EntryStyle)))
-        .into()
-    }
-
-    fn expanded_view(&self) -> iced::Element<ExpandedEntryMessages> {
-        let title = text(&self.name)
-            .width(Length::Fill)
-            .style(Color::from_rgb(0.0, 0.0, 0.0))
-            .size(20);
-
-        let perform = button(if self.installed == true {
-            delete_icon()
-        } else {
-            download_icon()
-        })
-        .on_press(if self.installed == true {
-            ExpandedEntryMessages::UnInstall
-        } else {
-            ExpandedEntryMessages::Install
-        })
-        .style(if self.installed == true {
-            theme::Button::Custom(Box::new(UninstallBtnStyle))
-        } else {
-            theme::Button::Custom(Box::new(InstallBtnStyle))
-        });
-
-        let visit = button(info_icon())
-            .style(theme::Button::Custom(Box::new(BtnStyle)))
-            .on_press(ExpandedEntryMessages::VisitWebsite);
-
-        let close = button(close_icon())
-            .on_press(ExpandedEntryMessages::Close)
-            .style(theme::Button::Custom(Box::new(CloseBtnStyle)));
-        container(
-            column![
-                row![title, perform, visit, close]
-                    .spacing(10)
-                    .width(Length::Fill),
-                text(&self.desc)
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .size(20),
-            ]
-            .spacing(20)
-            .width(Length::Fill)
-            .height(Length::Fill),
-        )
-        .padding(8)
-        .height(Length::Fill)
-        .width(Length::Fill)
-        .style(ContainerTheme::Custom(Box::new(ExpandedEntryStyle)))
-        .into()
-    }
-}
-
-const ICONS: Font = Font::with_name("CaskaydiaCove Nerd Font");
-
-fn icon(unicode: char) -> Text<'static> {
-    text(unicode.to_string())
-        .font(ICONS)
-        .width(20)
-        .horizontal_alignment(alignment::Horizontal::Center)
-}
-
-fn info_icon() -> Text<'static> {
-    icon('\u{f05a}')
-}
-
-fn download_icon() -> Text<'static> {
-    icon('\u{f0ed}')
-}
-
-fn delete_icon() -> Text<'static> {
-    icon('\u{f09e7}')
-}
-
-fn close_icon() -> Text<'static> {
-    icon('\u{f00d}')
-}
-
-struct BtnStyle;
-
-impl button::StyleSheet for BtnStyle {
-    type Style = iced::Theme;
-
-    fn active(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::BLACK,
-            ..Default::default()
-        }
-    }
-
-    fn hovered(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::BLACK,
-            ..Default::default()
-        }
-    }
-
-    fn pressed(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::BLACK,
-            ..Default::default()
-        }
-    }
-
-    fn disabled(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::BLACK,
-            ..Default::default()
-        }
-    }
-}
-
-struct InstallBtnStyle;
-
-impl button::StyleSheet for InstallBtnStyle {
-    type Style = iced::Theme;
-
-    fn active(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::BLACK,
-            ..Default::default()
-        }
-    }
-
-    fn hovered(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::from_rgba(0.0, 1.0, 0.0, 0.5),
-            ..Default::default()
-        }
-    }
-
-    fn pressed(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::from_rgba(0.0, 1.0, 0.0, 0.5),
-            ..Default::default()
-        }
-    }
-
-    fn disabled(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::BLACK,
-            ..Default::default()
-        }
-    }
-}
-
-struct UninstallBtnStyle;
-
-impl button::StyleSheet for UninstallBtnStyle {
-    type Style = iced::Theme;
-
-    fn active(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::BLACK,
-            ..Default::default()
-        }
-    }
-
-    fn hovered(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::from_rgba(1.0, 0.0, 0.0, 0.5),
-            ..Default::default()
-        }
-    }
-
-    fn pressed(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::from_rgba(1.0, 0.0, 0.0, 0.5),
-            ..Default::default()
-        }
-    }
-
-    fn disabled(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::BLACK,
-            ..Default::default()
-        }
-    }
-}
-
-struct CloseBtnStyle;
-
-impl button::StyleSheet for CloseBtnStyle {
-    type Style = iced::Theme;
-
-    fn active(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::BLACK,
-            border: iced::Border::with_radius(100.0),
-            ..Default::default()
-        }
-    }
-
-    fn hovered(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::BLACK,
-            ..Default::default()
-        }
-    }
-
-    fn pressed(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::BLACK,
-            ..Default::default()
-        }
-    }
-
-    fn disabled(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(BackgroundColor(Color::TRANSPARENT)),
-            text_color: Color::BLACK,
-            ..Default::default()
-        }
-    }
-}
-struct EntryStyle;
-
-impl container::StyleSheet for EntryStyle {
-    type Style = iced::Theme;
-
-    fn appearance(&self, style: &Self::Style) -> container::Appearance {
-        container::Appearance {
-            text_color: Some(Color::new(0.5, 0.5, 0.5, 1.0)),
-            background: Some(BackgroundColor(Color::new(0.0, 1.0, 0.0, 0.5))),
-            border: iced::Border {
-                radius: iced::border::Radius::from(5),
-                ..Default::default()
-            },
-            shadow: Shadow {
-                color: Color::BLACK,
-                offset: iced::Vector { x: 0.0, y: 0.0 },
-                blur_radius: 5.0,
-            },
-            ..style.appearance(&theme::Container::default())
-        }
-    }
-}
-
-struct ExpandedEntryStyle;
-
-impl container::StyleSheet for ExpandedEntryStyle {
-    type Style = iced::Theme;
-
-    fn appearance(&self, style: &Self::Style) -> container::Appearance {
-        container::Appearance {
-            text_color: Some(Color::new(0.5, 0.5, 0.5, 1.0)),
-            background: Some(BackgroundColor(Color::WHITE)),
-            ..style.appearance(&theme::Container::default())
-        }
-    }
-}
-
-struct LPanelStyle;
-
-impl container::StyleSheet for LPanelStyle {
-    type Style = iced::Theme;
-
-    fn appearance(&self, style: &Self::Style) -> container::Appearance {
-        container::Appearance {
-            text_color: Some(Color::BLACK),
-            background: Some(BackgroundColor(Color::from_rgb(0.87, 0.87, 0.87))),
-            ..style.appearance(&iced::theme::Container::default())
         }
     }
 }
