@@ -14,7 +14,7 @@ use decorations::*;
 use entries::{EMessages, Entries, ExpandedEMessages};
 
 // TODO: Taskes need to do.
-// 1. Make it modular
+// 1. Make it modular [done]
 // 2. Reduce startup time
 // 3. Improve UI, Make it more responsive
 // 4. Improve UX also
