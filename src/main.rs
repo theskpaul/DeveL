@@ -5,7 +5,7 @@ use iced::alignment::{self, Alignment};
 use iced::font::{Family, Style, Weight};
 use iced::theme::{self, Container as ContainerTheme};
 use iced::widget::{
-    button, column, container, horizontal_space, keyed_column, row, text, Container,
+    button, column, container, horizontal_space, keyed_column, row, Container, Text,
 };
 use iced::{window, Application, Command, Font, Pixels, Result as IcedResult, Settings, Size};
 use iced::{Element, Length};
@@ -168,7 +168,7 @@ impl Application for AppObj {
     }
 
     fn view(&self) -> iced::Element<Self::Message> {
-        let title = text("DeveL")
+        let title = Text::new("DeveL")
             .size(80)
             .height(Length::Fill)
             .width(Length::Fill)
@@ -266,7 +266,7 @@ fn empty_learn_btns<'a>() -> iced::Element<'a, ExpandedEMessages> {
 
 fn empty_message(message: &str) -> iced::Element<'_, Message> {
     container(
-        text(message)
+        Text::new(message)
             .width(Length::Fill)
             .size(25)
             .horizontal_alignment(alignment::Horizontal::Center),
@@ -278,7 +278,7 @@ fn empty_message(message: &str) -> iced::Element<'_, Message> {
 }
 
 fn empty_expanded_msg(message: &str) -> iced::Element<'_, Message> {
-    container(text(message))
+    container(Text::new(message))
         .width(Length::Fill)
         .height(Length::Fill)
         .align_x(alignment::Horizontal::Center)
@@ -288,7 +288,7 @@ fn empty_expanded_msg(message: &str) -> iced::Element<'_, Message> {
 
 fn view_controls<'a>(current_filter: Filter) -> iced::Element<'a, Message> {
     let filter_button = |label, filter, current_filter| {
-        let label = text(label);
+        let label = Text::new(label);
 
         let button = button(label).style(if filter == current_filter {
             iced::theme::Button::Positive

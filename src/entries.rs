@@ -1,7 +1,7 @@
 use iced::theme::{
     self, Container as ContainerTheme, Scrollable as ScrollableTheme, Text as TextTheme,
 };
-use iced::widget::{button, column, container, keyed_column, row, scrollable, text};
+use iced::widget::{button, column, container, keyed_column, row, scrollable, Text};
 use iced::Color;
 use iced::Length;
 
@@ -120,7 +120,7 @@ impl Entries {
     }
 
     pub fn view(&self) -> iced::Element<EMessages> {
-        let entry_btn = button(text(&self.name))
+        let entry_btn = button(Text::new(&self.name))
             .on_press(EMessages::Select)
             .style(iced::theme::Button::Text)
             .width(Length::Fill)
@@ -139,7 +139,7 @@ impl Entries {
     }
 
     pub fn expanded_view(&self) -> iced::Element<ExpandedEMessages> {
-        let title = text(&self.name)
+        let title = Text::new(&self.name)
             .width(Length::Fill)
             .style(Color::from_rgb(0.0, 0.0, 0.0))
             .size(20);
@@ -167,7 +167,7 @@ impl Entries {
 
         let link_box: iced::Element<_> = if !self.learn_form.is_empty() {
             row![
-                text("Learn from: ")
+                Text::new("Learn from: ")
                     .width(Length::Shrink)
                     .style(TextTheme::Color(Color::BLACK))
                     .vertical_alignment(iced::alignment::Vertical::Center),
@@ -190,7 +190,7 @@ impl Entries {
             column![
                 row![title, perform, close].spacing(10).width(Length::Fill),
                 scrollable(
-                    text(&self.desc)
+                    Text::new(&self.desc)
                         .width(Length::Fill)
                         .height(Length::Fill)
                         .size(20)
@@ -265,7 +265,7 @@ impl Site {
 
     fn view(&self) -> iced::Element<SiteMessage> {
         let ftext = format!("{} ", &self.website);
-        let content = text(ftext)
+        let content = Text::new(ftext)
             .style(TextTheme::Color(iced::Color::from_rgb(0.0, 0.0, 1.0)))
             .font(LINK);
 
